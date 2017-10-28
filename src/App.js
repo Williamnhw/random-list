@@ -4,13 +4,15 @@ import * as firebase from 'firebase';
 import Login from './components/Login';
 import Restaurants from './components/Restaurants';
 import LoggedIn from './components/LoggedIn';
+import PickRestaurant from './components/PickRestaurant';
 
 class App extends Component {
 	constructor() {
 		super();
 		this.state = {
 			user: undefined,
-			restaurants: []
+			restaurants: [],
+			restaurantPicked: undefined
 		}
 	}
 
@@ -62,6 +64,14 @@ class App extends Component {
 		});
 	}
 
+	pick = () => {
+		const max = this.state.restaurants.length;
+		const index = Math.floor(Math.random() * max);
+		this.setState({
+			restaurantPicked: this.state.restaurants[index]
+		});
+	}
+
 	render() {
 		return (
 			<div className="App">
@@ -69,6 +79,7 @@ class App extends Component {
 					<h1 className="App-title">Welcome to React!!!</h1>
 				</header>
 				<div className='App-intro'>
+					<PickRestaurant restaurant={this.state.restaurantPicked} pick={this.pick}/>
 					{this.state.user ? 
 						<LoggedIn add={this.add} logout={this.logout} />
 					 : 
