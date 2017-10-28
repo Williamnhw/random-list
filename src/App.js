@@ -1,75 +1,84 @@
 import React, { Component } from 'react';
 import './App.css';
 import * as firebase from 'firebase';
-import Login from './Login';
+import Login from './components/Login';
+import Restaurants from './components/Restaurants';
+import LoggedIn from './components/LoggedIn';
 
 class App extends Component {
-  constructor() {
-    super();
-    this.state = {
-      speed: 10,
-      user: undefined
-    }
-  }
+	constructor() {
+		super();
+		this.state = {
+			user: undefined,
+			restaurants: []
+		}
+	}
 
-  componentDidMount() {
-    const database = firebase.database();
-    const reactRef = database.ref().child('react');
-    const speedRef = reactRef.child('speed');
-    speedRef.on('value', snap => {
-      this.setState({
-        speed: snap.val()
-      })
-    console.log(snap.val())
-    })
-    firebase.auth().onAuthStateChanged(firebaseUser => {
-      if (firebaseUser) {
-        console.log(firebaseUser);
-        this.setState({
-          user: firebaseUser
-        })
-      } else {
-        console.log('not logged in');
-        this.setState({
-          user: undefined
-        })
-      }
-    })
-  }
+	componentDidMount() {
+		const database = firebase.database();
+		const reactRef = database.ref().child('react');
 
-  login = (event) => {
-    event.preventDefault();
-    const {email, password} = event.target;
-    console.log(email.value);
-    console.log(password.value);
+		const restaurantRef = reactRef.child('restaurant');
+		restaurantRef.on('value', snap => {
+			let obj = snap.val();
+			let array = Object.keys(obj).reduce((arr,elem)=>{
+				arr.push(obj[elem].name)
+				return arr;
+			},[])
+			this.setState({
+				restaurants: array
+			});
+		});
 
-    const auth = firebase.auth();
-    const promise = auth.signInWithEmailAndPassword(email.value, password.value);
-    promise.catch(e => console.log(e.message))
-  }
+		firebase.auth().onAuthStateChanged(firebaseUser => {
+			if (firebaseUser) {
+				console.log('logged in');
+				this.setState({
+					user: firebaseUser
+				})
+			} else {
+				console.log('not logged in');
+				this.setState({
+					user: undefined
+				})
+			}
+		})
+	}
 
-  logout = () => {
-    firebase.auth().signOut();
-  }
+	login = (email, password) => {
+		const auth = firebase.auth();
+		const promise = auth.signInWithEmailAndPassword(email, password);
+		promise.catch(e => console.log(e.message))
+	}
 
+	logout = () => {
+		firebase.auth().signOut();
+	}
 
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <h1 className="App-title">Welcome to React, Hello World!!!</h1>
-        </header>
-        <div className='App-intro'>
-          <p>{this.state.speed}</p>
-          {this.state.user ? 
-            <button id='logoutBtn' onClick={this.logout}>Logout</button>
-           : 
-           <Login login={this.login}/> 
-          }
-        </div>
-      </div>
-    );
-  }
+	add = (name) => {
+		const restaurantRef = firebase.database().ref('react/restaurant');
+		restaurantRef.push({
+			name
+		});
+	}
+
+	render() {
+		return (
+			<div className="App">
+				<header className="App-header">
+					<h1 className="App-title">Welcome to React!!!</h1>
+				</header>
+				<div className='App-intro'>
+					{this.state.user ? 
+						<LoggedIn add={this.add} logout={this.logout} />
+					 : 
+					 <Login login={this.login}/>
+					}
+					<Restaurants restaurants={this.state.restaurants} />
+				</div>
+			</div>
+		);
+	}
 }
 
 export default App;
